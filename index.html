@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ABC Flags!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    font-family: 'Baloo 2', system-ui, sans-serif;
+    touch-action: manipulation;
+    background: #222;
+  }
+  #stage {
+    position: relative;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: background 0.5s ease;
+    overflow: hidden;
+  }
+  .bg-shape {
+    position: absolute; border-radius: 50%;
+    opacity: 0.16; background: #fff;
+    animation: float 9s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-30px); }
+  }
+
+  #card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2vh;
+    animation: pop-in 0.45s cubic-bezier(.34,1.56,.64,1);
+    cursor: pointer;
+    max-width: 92vw;
+  }
+  @keyframes pop-in {
+    0% { transform: scale(0.75) rotate(-3deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  #flagwrap {
+    height: 26vh; display: flex; align-items: center; justify-content: center;
+  }
+  #flag {
+    max-height: 26vh;
+    max-width: 60vw;
+    border-radius: 1.2vh;
+    box-shadow: 0 1.2vh 3vh rgba(0,0,0,0.35);
+    background: rgba(255,255,255,0.15);
+  }
+  #flagfallback {
+    display: none;
+    width: 34vh; height: 26vh;
+    border-radius: 1.2vh;
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 1.2vh 3vh rgba(0,0,0,0.35);
+    align-items: center; justify-content: center;
+    font-size: 8vh; font-weight: 800; color: #fff;
+  }
+
+  #phrase {
+    display: flex; align-items: baseline; flex-wrap: wrap; justify-content: center;
+    gap: 1.5vw;
+    text-align: center;
+  }
+  #bigletter {
+    font-size: 22vh;
+    font-weight: 800;
+    line-height: 0.8;
+    text-shadow: 0.6vh 0.6vh 0 rgba(0,0,0,0.15);
+  }
+  #restword {
+    font-size: 7.5vh;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0.4vh 0.4vh 0 rgba(0,0,0,0.15);
+  }
+
+  .sparkle {
+    position: absolute;
+    font-size: 4vh;
+    opacity: 0;
+    pointer-events: none;
+    animation: sparkle-pop 0.9s ease-out forwards;
+  }
+  @keyframes sparkle-pop {
+    0% { opacity: 0; transform: scale(0) translateY(0); }
+    30% { opacity: 1; }
+    100% { opacity: 0; transform: scale(1.4) translateY(-12vh); }
+  }
+
+  .navbtn {
+    position: absolute;
+    bottom: 5vh;
+    width: 10.5vh; height: 10.5vh;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 5.5vh;
+    color: #fff;
+    box-shadow: 0 1vh 2vh rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .navbtn:active { transform: scale(0.88); background: rgba(255,255,255,0.55); }
+  #prevbtn { left: 4vw; }
+  #nextbtn { right: 4vw; }
+
+  #speakbtn {
+    position: absolute;
+    top: 4vh;
+    left: 50%; transform: translateX(-50%);
+    width: 8vh; height: 8vh;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4vh;
+    box-shadow: 0 1vh 2vh rgba(0,0,0,0.15);
+  }
+  #speakbtn:active { transform: translateX(-50%) scale(0.88); }
+
+  #progress {
+    position: absolute;
+    top: 2vh; right: 2.5vw;
+    font-size: 1.9vh;
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-align: right;
+  }
+
+  #modetoggle {
+    position: absolute;
+    top: 2vh; left: 2.5vw;
+    display: flex; gap: 0.8vh;
+  }
+  .modebtn {
+    font-family: inherit; font-weight: 700; font-size: 1.9vh;
+    padding: 1vh 1.6vh; border-radius: 2vh; border: none;
+    background: rgba(255,255,255,0.25); color: #fff;
+    opacity: 0.7;
+  }
+  .modebtn.active { opacity: 1; background: rgba(255,255,255,0.55); color: #333; }
+
+  #letterstrip {
+    position: absolute;
+    bottom: 0.8vh; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 0.4vw;
+    max-width: 60vw;
+    overflow-x: auto;
+    padding: 0.5vh 1vh;
+  }
+  #letterstrip::-webkit-scrollbar { display: none; }
+  .letterbtn {
+    flex: 0 0 auto;
+    width: 3.4vh; height: 3.4vh;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.3);
+    color: #fff;
+    font-family: inherit; font-weight: 700; font-size: 1.6vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .letterbtn:disabled { opacity: 0.15; }
+  .letterbtn.current { background: rgba(255,255,255,0.85); color: #333; }
+
+  @media (prefers-reduced-motion: reduce) {
+    #card, .bg-shape, .sparkle { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div class="bg-shape" style="width:22vh;height:22vh; top:8%; left:6%;"></div>
+  <div class="bg-shape" style="width:14vh;height:14vh; bottom:12%; right:10%; animation-delay:2s;"></div>
+  <div class="bg-shape" style="width:9vh;height:9vh; top:15%; right:18%; animation-delay:4s;"></div>
+
+  <div id="modetoggle">
+    <button class="modebtn" id="btn-countries" onclick="setMode('countries')">🌍 Countries</button>
+    <button class="modebtn" id="btn-states" onclick="setMode('states')">⭐ US States</button>
+  </div>
+  <div id="progress"></div>
+
+  <div id="card" onclick="handleCardTap()">
+    <div id="flagwrap">
+      <img id="flag" src="" alt="" referrerpolicy="no-referrer" loading="eager">
+      <div id="flagfallback"></div>
+    </div>
+    <div id="phrase">
+      <span id="bigletter"></span><span id="restword"></span>
+    </div>
+  </div>
+
+  <button id="speakbtn" onclick="event.stopPropagation(); speakCurrent();" aria-label="hear it again">🔊</button>
+  <button id="prevbtn" class="navbtn" onclick="event.stopPropagation(); goTo(idx-1);" aria-label="previous">‹</button>
+  <button id="nextbtn" class="navbtn" onclick="event.stopPropagation(); goTo(idx+1);" aria-label="next">›</button>
+
+  <div id="letterstrip"></div>
+</div>
+
+<script>
+// ---- Data: 195 countries (193 UN members + Holy See + Palestine) ----
+const COUNTRIES_RAW = [
+["Afghanistan","AF"],["Albania","AL"],["Algeria","DZ"],["Andorra","AD"],["Angola","AO"],
+["Antigua and Barbuda","AG"],["Argentina","AR"],["Armenia","AM"],["Australia","AU"],["Austria","AT"],
+["Azerbaijan","AZ"],["Bahamas","BS"],["Bahrain","BH"],["Bangladesh","BD"],["Barbados","BB"],
+["Belarus","BY"],["Belgium","BE"],["Belize","BZ"],["Benin","BJ"],["Bhutan","BT"],
+["Bolivia","BO"],["Bosnia and Herzegovina","BA"],["Botswana","BW"],["Brazil","BR"],["Brunei","BN"],
+["Bulgaria","BG"],["Burkina Faso","BF"],["Burundi","BI"],["Cabo Verde","CV"],["Cambodia","KH"],
+["Cameroon","CM"],["Canada","CA"],["Central African Republic","CF"],["Chad","TD"],["Chile","CL"],
+["China","CN"],["Colombia","CO"],["Comoros","KM"],["Congo","CG"],["Congo (DR)","CD"],
+["Costa Rica","CR"],["Croatia","HR"],["Cuba","CU"],["Cyprus","CY"],["Czechia","CZ"],
+["Denmark","DK"],["Djibouti","DJ"],["Dominica","DM"],["Dominican Republic","DO"],["Ecuador","EC"],
+["Egypt","EG"],["El Salvador","SV"],["Equatorial Guinea","GQ"],["Eritrea","ER"],["Estonia","EE"],
+["Eswatini","SZ"],["Ethiopia","ET"],["Fiji","FJ"],["Finland","FI"],["France","FR"],
+["Gabon","GA"],["Gambia","GM"],["Georgia","GE"],["Germany","DE"],["Ghana","GH"],
+["Greece","GR"],["Grenada","GD"],["Guatemala","GT"],["Guinea","GN"],["Guinea-Bissau","GW"],
+["Guyana","GY"],["Haiti","HT"],["Holy See","VA"],["Honduras","HN"],["Hungary","HU"],
+["Iceland","IS"],["India","IN"],["Indonesia","ID"],["Iran","IR"],["Iraq","IQ"],
+["Ireland","IE"],["Israel","IL"],["Italy","IT"],["Ivory Coast","CI"],["Jamaica","JM"],
+["Japan","JP"],["Jordan","JO"],["Kazakhstan","KZ"],["Kenya","KE"],["Kiribati","KI"],
+["Kuwait","KW"],["Kyrgyzstan","KG"],["Laos","LA"],["Latvia","LV"],["Lebanon","LB"],
+["Lesotho","LS"],["Liberia","LR"],["Libya","LY"],["Liechtenstein","LI"],["Lithuania","LT"],
+["Luxembourg","LU"],["Madagascar","MG"],["Malawi","MW"],["Malaysia","MY"],["Maldives","MV"],
+["Mali","ML"],["Malta","MT"],["Marshall Islands","MH"],["Mauritania","MR"],["Mauritius","MU"],
+["Mexico","MX"],["Micronesia","FM"],["Moldova","MD"],["Monaco","MC"],["Mongolia","MN"],
+["Montenegro","ME"],["Morocco","MA"],["Mozambique","MZ"],["Myanmar","MM"],["Namibia","NA"],
+["Nauru","NR"],["Nepal","NP"],["Netherlands","NL"],["New Zealand","NZ"],["Nicaragua","NI"],
+["Niger","NE"],["Nigeria","NG"],["North Korea","KP"],["North Macedonia","MK"],["Norway","NO"],
+["Oman","OM"],["Pakistan","PK"],["Palau","PW"],["Palestine","PS"],["Panama","PA"],
+["Papua New Guinea","PG"],["Paraguay","PY"],["Peru","PE"],["Philippines","PH"],["Poland","PL"],
+["Portugal","PT"],["Qatar","QA"],["Romania","RO"],["Russia","RU"],["Rwanda","RW"],
+["Saint Kitts and Nevis","KN"],["Saint Lucia","LC"],["Saint Vincent and the Grenadines","VC"],["Samoa","WS"],["San Marino","SM"],
+["Sao Tome and Principe","ST"],["Saudi Arabia","SA"],["Senegal","SN"],["Serbia","RS"],["Seychelles","SC"],
+["Sierra Leone","SL"],["Singapore","SG"],["Slovakia","SK"],["Slovenia","SI"],["Solomon Islands","SB"],
+["Somalia","SO"],["South Africa","ZA"],["South Korea","KR"],["South Sudan","SS"],["Spain","ES"],
+["Sri Lanka","LK"],["Sudan","SD"],["Suriname","SR"],["Sweden","SE"],["Switzerland","CH"],
+["Syria","SY"],["Tajikistan","TJ"],["Tanzania","TZ"],["Thailand","TH"],["Timor-Leste","TL"],
+["Togo","TG"],["Tonga","TO"],["Trinidad and Tobago","TT"],["Tunisia","TN"],["Turkey","TR"],
+["Turkmenistan","TM"],["Tuvalu","TV"],["Uganda","UG"],["Ukraine","UA"],["United Arab Emirates","AE"],
+["United Kingdom","GB"],["United States","US"],["Uruguay","UY"],["Uzbekistan","UZ"],["Vanuatu","VU"],
+["Venezuela","VE"],["Vietnam","VN"],["Yemen","YE"],["Zambia","ZM"],["Zimbabwe","ZW"]
+];
+
+// ---- Data: all 50 US states ----
+const STATES_RAW = [
+["Alabama","al"],["Alaska","ak"],["Arizona","az"],["Arkansas","ar"],["California","ca"],
+["Colorado","co"],["Connecticut","ct"],["Delaware","de"],["Florida","fl"],["Georgia","ga"],
+["Hawaii","hi"],["Idaho","id"],["Illinois","il"],["Indiana","in"],["Iowa","ia"],
+["Kansas","ks"],["Kentucky","ky"],["Louisiana","la"],["Maine","me"],["Maryland","md"],
+["Massachusetts","ma"],["Michigan","mi"],["Minnesota","mn"],["Mississippi","ms"],["Missouri","mo"],
+["Montana","mt"],["Nebraska","ne"],["Nevada","nv"],["New Hampshire","nh"],["New Jersey","nj"],
+["New Mexico","nm"],["New York","ny"],["North Carolina","nc"],["North Dakota","nd"],["Ohio","oh"],
+["Oklahoma","ok"],["Oregon","or"],["Pennsylvania","pa"],["Rhode Island","ri"],["South Carolina","sc"],
+["South Dakota","sd"],["Tennessee","tn"],["Texas","tx"],["Utah","ut"],["Vermont","vt"],
+["Virginia","va"],["Washington","wa"],["West Virginia","wv"],["Wisconsin","wi"],["Wyoming","wy"]
+];
+
+// A handful of countries have Wikipedia Commons flag filenames that don't
+// match the plain "Flag of {name}.svg" pattern — map those explicitly.
+const WIKI_FILENAME_OVERRIDES = {
+  "Netherlands": "Flag of the Netherlands.svg",
+  "Philippines": "Flag of the Philippines.svg",
+  "United Kingdom": "Flag of the United Kingdom.svg",
+  "United States": "Flag of the United States.svg",
+  "Gambia": "Flag of the Gambia.svg",
+  "Bahamas": "Flag of the Bahamas.svg",
+  "Czechia": "Flag of the Czech Republic.svg",
+  "Dominican Republic": "Flag of the Dominican Republic.svg",
+  "Marshall Islands": "Flag of the Marshall Islands.svg",
+  "Comoros": "Flag of the Comoros.svg",
+  "Central African Republic": "Flag of the Central African Republic.svg",
+  "Congo": "Flag of the Republic of the Congo.svg",
+  "Congo (DR)": "Flag of the Democratic Republic of the Congo.svg",
+  "Solomon Islands": "Flag of the Solomon Islands.svg",
+  "Ivory Coast": "Flag of Côte d'Ivoire.svg",
+  "Timor-Leste": "Flag of East Timor.svg",
+  "Holy See": "Flag of the Vatican City.svg",
+  "Cabo Verde": "Flag of Cape Verde.svg",
+  "Sao Tome and Principe": "Flag of São Tomé and Príncipe.svg",
+  "Saint Kitts and Nevis": "Flag of Saint Kitts and Nevis.svg"
+};
+
+function wikiFlagUrl(name, width) {
+  const title = WIKI_FILENAME_OVERRIDES[name] || `Flag of ${name}.svg`;
+  const underscored = title.replace(/ /g, '_');
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(underscored)}?width=${width}`;
+}
+
+function buildList(raw, isState) {
+  return raw.map(([name, code]) => {
+    const c = isState ? `us-${code}` : code.toLowerCase();
+    return {
+      name,
+      letter: name[0].toUpperCase(),
+      candidates: [
+        `https://flagcdn.com/w640/${c}.png`,
+        wikiFlagUrl(name, 640),
+        `https://flagcdn.com/w320/${c}.png`
+      ]
+    };
+  });
+}
+
+const LISTS = {
+  countries: buildList(COUNTRIES_RAW, false),
+  states: buildList(STATES_RAW, true)
+};
+
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+const PALETTE = [
+  {bg:"#FF6B6B", accent:"#FFE66D"},
+  {bg:"#4ECDC4", accent:"#FFFFFF"},
+  {bg:"#5B7FDE", accent:"#FFD23F"},
+  {bg:"#6BCB77", accent:"#FFFFFF"},
+  {bg:"#B892FF", accent:"#FFE66D"},
+  {bg:"#FF9F45", accent:"#FFFFFF"}
+];
+
+let mode = 'countries';
+let idx = 0;
+let unlocked = false;
+
+const stage = document.getElementById('stage');
+const flagEl = document.getElementById('flag');
+const bigletterEl = document.getElementById('bigletter');
+const restwordEl = document.getElementById('restword');
+const card = document.getElementById('card');
+const progressEl = document.getElementById('progress');
+const letterstripEl = document.getElementById('letterstrip');
+const flagFallbackEl = document.getElementById('flagfallback');
+
+flagEl.addEventListener('error', function() {
+  const item = currentList()[idx];
+  const next = (parseInt(this.dataset.tryIndex || '0', 10)) + 1;
+  if (next < item.candidates.length) {
+    this.dataset.tryIndex = next;
+    this.src = item.candidates[next];
+  } else {
+    this.style.display = 'none';
+    flagFallbackEl.style.display = 'flex';
+    flagFallbackEl.textContent = item.letter;
+  }
+});
+flagEl.addEventListener('load', function() {
+  this.style.display = 'block';
+  flagFallbackEl.style.display = 'none';
+});
+
+function currentList() { return LISTS[mode]; }
+
+function setMode(m) {
+  unlocked = true;
+  mode = m;
+  idx = 0;
+  document.getElementById('btn-countries').classList.toggle('active', m === 'countries');
+  document.getElementById('btn-states').classList.toggle('active', m === 'states');
+  buildLetterStrip();
+  render();
+}
+
+function buildLetterStrip() {
+  const list = currentList();
+  const firstIndexOfLetter = {};
+  list.forEach((item, i) => {
+    if (!(item.letter in firstIndexOfLetter)) firstIndexOfLetter[item.letter] = i;
+  });
+  letterstripEl.innerHTML = '';
+  ALPHABET.forEach(L => {
+    const btn = document.createElement('button');
+    btn.className = 'letterbtn';
+    btn.textContent = L;
+    if (L in firstIndexOfLetter) {
+      btn.onclick = (e) => { e.stopPropagation(); unlocked = true; idx = firstIndexOfLetter[L]; render(); };
+    } else {
+      btn.disabled = true;
+    }
+    btn.id = 'letterbtn-' + L;
+    letterstripEl.appendChild(btn);
+  });
+}
+
+function render() {
+  const list = currentList();
+  const item = list[idx];
+  const pal = PALETTE[idx % PALETTE.length];
+  stage.style.background = pal.bg;
+  flagEl.dataset.tryIndex = 0;
+  flagEl.style.display = 'block';
+  flagFallbackEl.style.display = 'none';
+  flagEl.src = item.candidates[0];
+  flagEl.alt = item.name;
+  bigletterEl.textContent = item.letter;
+  bigletterEl.style.color = pal.accent;
+  restwordEl.textContent = " is for " + item.name + "!";
+  progressEl.textContent = (idx + 1) + " / " + list.length;
+
+  document.querySelectorAll('.letterbtn').forEach(b => b.classList.remove('current'));
+  const cur = document.getElementById('letterbtn-' + item.letter);
+  if (cur) cur.classList.add('current');
+
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = '';
+
+  if (unlocked) speakCurrent();
+}
+
+let bestVoice = null;
+// iOS/macOS ship a handful of "novelty" voices (robotic, cartoonish, or silly)
+// alongside the good natural ones. Actively steer away from the former and
+// toward the latter rather than just guessing from "Enhanced" in the name.
+const NOVELTY_VOICE_NAMES = [
+  'albert','bad news','bahh','bells','boing','bubbles','cellos','deranged',
+  'good news','hysterical','jester','organ','ralph','superstar','trinoids',
+  'whisper','wobble','zarvox','junior','kathy','princess','fred','rocko',
+  'grandma','grandpa','eddy','flo','reed','sandy','shelley'
+];
+const PREFERRED_VOICE_NAMES = [
+  'samantha','ava','allison','susan','nicky','karen','moira','tessa',
+  'serena','fiona','zoe','daniel','tom','alex','evan','aaron','nathan',
+  'siri'
+];
+function pickBestVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+  const english = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+  const pool = english.length ? english : voices;
+  const isNovelty = (n) => NOVELTY_VOICE_NAMES.some(bad => n.includes(bad));
+  const isPreferred = (n) => PREFERRED_VOICE_NAMES.some(good => n.includes(good));
+  const score = (v) => {
+    const n = v.name.toLowerCase();
+    if (isNovelty(n)) return -10;
+    let s = 0;
+    if (n.includes('enhanced') || n.includes('premium') || n.includes('neural') || n.includes('natural')) s += 5;
+    if (isPreferred(n)) s += 3;
+    if (!v.localService) s += 1; // network voices are often higher quality
+    return s;
+  };
+  const ranked = pool.slice().sort((a, b) => score(b) - score(a));
+  bestVoice = ranked[0] || null;
+}
+if ('speechSynthesis' in window) {
+  pickBestVoice();
+  window.speechSynthesis.onvoiceschanged = pickBestVoice;
+}
+
+function speakCurrent() {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const item = currentList()[idx];
+  const utter = new SpeechSynthesisUtterance(item.letter + " is for " + item.name + "!");
+  if (bestVoice) utter.voice = bestVoice;
+  utter.rate = 0.78;
+  utter.pitch = 1.02;
+  window.speechSynthesis.speak(utter);
+}
+
+function goTo(n) {
+  unlocked = true;
+  const list = currentList();
+  idx = (n + list.length) % list.length;
+  render();
+}
+
+function handleCardTap() {
+  unlocked = true;
+  burstSparkle();
+  goTo(idx + 1);
+}
+
+function burstSparkle() {
+  const emojis = ["✨","⭐","🌟"];
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = emojis[i];
+    s.style.left = (40 + Math.random() * 20) + 'vw';
+    s.style.top = (50 + Math.random() * 10) + 'vh';
+    s.style.animationDelay = (i * 0.08) + 's';
+    stage.appendChild(s);
+    setTimeout(() => s.remove(), 1000);
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') goTo(idx + 1);
+  if (e.key === 'ArrowLeft') goTo(idx - 1);
+});
+
+setMode('countries');
+</script>
+
+</body>
+</html>
